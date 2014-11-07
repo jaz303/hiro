@@ -27,4 +27,4 @@ UpdateSet.prototype.forEach = function(fn) {
             }
         }
     }
-});
+};
