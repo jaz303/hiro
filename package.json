@@ -11,5 +11,8 @@
   "dependencies": {
     "classkit": "^1.1.1",
     "render-q": "^1.0.1"
+  },
+  "devDependencies": {
+    "uglify-js": "^2.4.15"
   }
 }
