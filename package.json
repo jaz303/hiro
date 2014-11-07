@@ -1,0 +1,15 @@
+{
+  "name": "hiro",
+  "version": "0.0.0",
+  "description": "Component engine",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Jason Frame <jason@onehackoranother.com> (http://jasonframe.co.uk)",
+  "license": "ISC",
+  "dependencies": {
+    "classkit": "^1.1.1",
+    "render-q": "^1.0.1"
+  }
+}

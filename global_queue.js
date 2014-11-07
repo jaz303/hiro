@@ -1,0 +1,1 @@
+module.exports = require('./queue')(require('render-q')(window));
