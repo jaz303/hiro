@@ -29,7 +29,7 @@ module.exports = {
         }
     },
 
-    attachAsRootComponent: function(el) {
+    mountAsRootComponent: function(el) {
         if (this.isComponentMounted()) {
             throw new Error("can't attach as root component - component is already mounted");
         }
@@ -57,10 +57,10 @@ module.exports = {
         }
     },
 
-    componentWillAttach: function() { this._callOnChildComponents('componentWillAttach'); },
-    componentDidAttach: function() { this._callOnChildComponents('componentDidAttach'); },
-    componentWillDetach: function() { this._callOnChildComponents('componentWillDetach'); },
-    componentDidDetach: function() { this._callOnChildComponents('componentDidDetach'); },
+    componentWillMount: function() { this._callOnChildComponents('componentWillMount'); },
+    componentDidMount: function() { this._callOnChildComponents('componentDidMount'); },
+    componentWillUnmount: function() { this._callOnChildComponents('componentWillUnmount'); },
+    componentDidUnmount: function() { this._callOnChildComponents('componentDidUnmount'); },
 
     _attachChildComponentViaElement: function(component, el) {
         this._renderer.attachComponentViaElement(this, component, el);
