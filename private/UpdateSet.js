@@ -3,27 +3,27 @@ function UpdateSet() {
 }
 
 UpdateSet.prototype.clear = function() {
-    this._lastIndexes = {};
+    this._prevIndexes = {};
     this._operations = [];
 }
 
 UpdateSet.prototype.push = function(id, op) {
-
     var prevIndex = this._prevIndexes[id];
     if (typeof prevIndex === 'number') {
-        this._operations[prevIndex] = false;
+        this._operations[prevIndex] = null;
     }
-
-    this._operations.push(true, op);
+    this._prevIndexes[id] = this._operations.length;
+    this._operations.push(op);
 }
 
 UpdateSet.prototype.forEach = function(fn) {
-    for (var i = 0, len = this._operations.length; i < len; i += 2) {
+    for (var i = 0, len = this._operations.length; i < len; ++i) {
         if (op[i]) {
             try {
-                fn(op[i+1]);
+                fn(op[i]);
             } catch (e) {
-                // ...?
+                console.error("error caught while processing update operation");
+                console.error(e);
             }
         }
     }
