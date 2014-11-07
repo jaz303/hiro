@@ -7,68 +7,51 @@ function create(q) {
     var render  = q;
     var after   = q.after;
 
-
-    var scheduled = false;
+	var scheduled = false;
     var hierarchyUpdates = new UpdateSet();
     var invalidComponents = {};
 
     function append(parentComponent, childComponent, targetElement) {
-        
-        var currentParent   = childComponent._componentAttachedParent;
-        var rootNode        = childComponent.getComponentRootNode();
-        var wasMounted      = false;
-
-        if (currentParent) {
-            wasMounted = currentParent.isComponentMounted();
-            rootNode.parentNode.removeChild(rootNode);
-            var ch = currentParent._componentAttachedChildren;
-            ch.splice(ch.indexOf(childComponent), 1);
-        }
-
-        var willMount = parentComponent.isComponentMounted() && !wasMounted;
-
-        if (willMount) {
-            childComponent.componentWillMount();
-        }
-
-        targetElement.appendChild(rootNode);
-        childComponent._componentAttachedParent = parentComponent;
-        (parentComponent._componentAttachedChildren
-            || (parentComponent._componentAttachedChildren = [])).push(childComponent);
-
-        if (willMount) {
-            childComponent.componentDidMount();
-        }
-    
+        insert(parentComponent, childComponent, targetElement, false);
     }
 
     function replace(parentComponent, childComponent, targetElement) {
+    	insert(parentComponent, childComponent, targetElement, true);
+    }
 
-        var currentParent   = childComponent._componentAttachedParent;
-        var rootNode        = childComponent.getComponentRootNode();
-        var wasMounted      = false;
+    function insert(parentComponent, childComponent, targetElement, replace) {
 
-        if (currentParent) {
-            wasMounted = currentParent.isComponentMounted();
-            rootNode.parentNode.removeChild(rootNode);
-            var ch = currentParent._componentAttachedChildren;
-            ch.splice(ch.indexOf(childComponent), 1);
-        }
+    	var currentParent   = childComponent._componentAttachedParent;
+    	var rootNode        = childComponent.getComponentRootNode();
+    	var wasMounted      = false;
 
-        var willMount = parentComponent.isComponentMounted() && !wasMounted;
+    	if (currentParent) {
+    	    wasMounted = currentParent.isComponentMounted();
+    	    rootNode.parentNode.removeChild(rootNode);
+    	    var ch = currentParent._componentAttachedChildren;
+    	    ch.splice(ch.indexOf(childComponent), 1);
+    	}
 
-        if (willMount) {
-            childComponent.componentWillMount();
-        }
+    	var willMount = parentComponent.isComponentMounted() && !wasMounted;
 
-        targetElement.parentNode.replaceChild(rootNode, targetElement);
-        childComponent._componentAttachedParent = parentComponent;
-        (parentComponent._componentAttachedChildren
-            || (parentComponent._componentAttachedChildren = [])).push(childComponent);
+    	if (willMount) {
+    	    childComponent.componentWillMount();
+    	}
 
-        if (willMount) {
-            childComponent.componentDidMount();
-        }
+    	if (replace) {
+    		targetElement.parentNode.replaceChild(rootNode, targetElement);
+    	} else {
+    		targetElement.appendChild(rootNode);	
+    	}
+
+    	childComponent._componentAttachedParent = parentComponent;
+    	(parentComponent._componentAttachedChildren
+    	    || (parentComponent._componentAttachedChildren = [])).push(childComponent);
+
+    	if (willMount) {
+    	    childComponent.componentDidMount();
+    	}
+
     }
 
     function remove(parentComponent, childComponent) {
