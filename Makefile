@@ -1,9 +1,4 @@
-SRC := \
-	global_queue.js \
-	mixin.js \
-	queue.js \
-	SimpleComponent.js \
-	SimpleContainer.js
+SRC := $(shell browserify --list standalone.js)
 
 all: build/hiro-standalone.js build/hiro-standalone.min.js
 
