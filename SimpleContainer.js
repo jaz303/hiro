@@ -1,25 +1,25 @@
 var SimpleContainer = module.exports = SimpleComponent.extend(function(_super) {
 
-	return [
+    return [
 
-		function() {
-			_super.constructor.call(this);
-		},
+        function() {
+            _super.constructor.call(this);
+        },
 
-		'methods', {
-			getContainerRootNode: function() {
-				return this._root;
-			},
+        'methods', {
+            getContainerRootNode: function() {
+                return this._root;
+            },
 
-			addChildComponent: function(component) {
-				this._attachChildComponentViaElement(component, this.getContainerRootNode());
-			},
+            addChildComponent: function(component) {
+                this._attachChildComponentViaElement(component, this.getContainerRootNode());
+            },
 
-			removeChildComponent: function(component) {
-				this._detachChildComponent(component, this.getContainerRootNode());
-			}
-		}
+            removeChildComponent: function(component) {
+                this._detachChildComponent(component, this.getContainerRootNode());
+            }
+        }
 
-	];
+    ];
 
 });
