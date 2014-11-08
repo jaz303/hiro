@@ -1,6 +1,7 @@
 !function(e){if("object"==typeof exports&&"undefined"!=typeof module)module.exports=e();else if("function"==typeof define&&define.amd)define([],e);else{var f;"undefined"!=typeof window?f=window:"undefined"!=typeof global?f=global:"undefined"!=typeof self&&(f=self),f.hiro=e()}}(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 var nextComponentId = 1;
 
+var Class = require('classkit').Class;
 var queue = require('./global_queue');
 
 var SimpleComponent = module.exports = Class.extend(function(_super) {
@@ -39,9 +40,9 @@ var SimpleComponent = module.exports = Class.extend(function(_super) {
     ];
 
 });
-},{"./global_queue":2,"./mixin":3}],2:[function(require,module,exports){
+},{"./global_queue":2,"./mixin":3,"classkit":4}],2:[function(require,module,exports){
 module.exports = require('./queue')(require('render-q')(window));
-},{"./queue":6,"render-q":4}],3:[function(require,module,exports){
+},{"./queue":7,"render-q":5}],3:[function(require,module,exports){
 var EMPTY_HINTS = { all: true };
 
 module.exports = {
@@ -136,6 +137,79 @@ module.exports = {
 
 };
 },{}],4:[function(require,module,exports){
+exports.Class = Class;
+
+function Class() {};
+  
+Class.prototype.method = function(name) {
+  var self = this, method = this[name];
+  return function() { return method.apply(self, arguments); }
+}
+
+Class.prototype.lateBoundMethod = function(name) {
+  var self = this;
+  return function() { return self[name].apply(self, arguments); }
+}
+
+Class.extend = function(fn) {
+
+  var features;
+
+  if (fn) {
+    // backwards compatibility
+    if (fn.length > 1) {
+      features = fn(this, this.prototype);
+    } else {
+      features = fn(this.prototype);
+    }
+  } else {
+    features = [function() {}];
+  }
+  
+  var ctor = features[0];
+  ctor._super = this;
+  ctor.prototype = Object.create(this.prototype);
+  ctor.prototype.constructor = ctor;
+  
+  ctor.extend = this.extend;
+  ctor.Features = Object.create(this.Features);
+    
+  for (var i = 1; i < features.length; i += 2) {
+    this.Features[features[i]](ctor, features[i+1]);
+  }
+  
+  return ctor;
+  
+};
+
+Class.Features = {
+  methods: function(ctor, methods) {
+    for (var methodName in methods) {
+      ctor.prototype[methodName] = methods[methodName];
+    }
+  },
+  properties: function(ctor, properties) {
+    Object.defineProperties(ctor.prototype, properties);
+  },
+  delegate: function(ctor, delegates) {
+    for (var methodName in delegates) {
+      var target = delegates[methodName];
+      if (Array.isArray(target)) {
+        ctor.prototype[methodName] = makeDelegate(target[0], target[1]);
+      } else {
+        ctor.prototype[methodName] = makeDelegate(target, methodName);
+      }
+    }
+  }
+};
+
+function makeDelegate(member, method) {
+  return function() {
+    var target = this[member];
+    return target[method].apply(target, arguments);
+  }
+}
+},{}],5:[function(require,module,exports){
 module.exports = function(win) {
 
     var rendering   = false;
@@ -214,7 +288,9 @@ module.exports = function(win) {
     return enqueue;
 
 }
-},{}],5:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
+module.exports = UpdateSet;
+
 function UpdateSet() {
     this.clear();
 }
@@ -235,9 +311,9 @@ UpdateSet.prototype.push = function(id, op) {
 
 UpdateSet.prototype.forEach = function(fn) {
     for (var i = 0, len = this._operations.length; i < len; ++i) {
-        if (op[i]) {
+        if (this._operations[i]) {
             try {
-                fn(op[i]);
+                fn(this._operations[i]);
             } catch (e) {
                 console.error("error caught while processing update operation");
                 console.error(e);
@@ -245,7 +321,7 @@ UpdateSet.prototype.forEach = function(fn) {
         }
     }
 };
-},{}],6:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 module.exports = create;
 
 var UpdateSet = require('./private/UpdateSet');
@@ -382,11 +458,11 @@ function create(q) {
     return q;
 
 }
-},{"./private/UpdateSet":5}],7:[function(require,module,exports){
+},{"./private/UpdateSet":6}],8:[function(require,module,exports){
 module.exports = {
     queue           : require('./global_queue'),
     mixin           : require('./mixin'),
     SimpleComponent : require('./SimpleComponent')
 };
-},{"./SimpleComponent":1,"./global_queue":2,"./mixin":3}]},{},[7])(7)
+},{"./SimpleComponent":1,"./global_queue":2,"./mixin":3}]},{},[8])(8)
 });
