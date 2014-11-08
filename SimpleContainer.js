@@ -1,3 +1,5 @@
+var SimpleComponent = require('./SimpleComponent');
+
 var SimpleContainer = module.exports = SimpleComponent.extend(function(_super) {
 
     return [

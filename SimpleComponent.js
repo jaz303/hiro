@@ -1,5 +1,6 @@
 var nextComponentId = 1;
 
+var Class = require('classkit').Class;
 var queue = require('./global_queue');
 
 var SimpleComponent = module.exports = Class.extend(function(_super) {

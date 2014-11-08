@@ -1,3 +1,5 @@
+module.exports = UpdateSet;
+
 function UpdateSet() {
     this.clear();
 }
@@ -18,9 +20,9 @@ UpdateSet.prototype.push = function(id, op) {
 
 UpdateSet.prototype.forEach = function(fn) {
     for (var i = 0, len = this._operations.length; i < len; ++i) {
-        if (op[i]) {
+        if (this._operations[i]) {
             try {
-                fn(op[i]);
+                fn(this._operations[i]);
             } catch (e) {
                 console.error("error caught while processing update operation");
                 console.error(e);
