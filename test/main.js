@@ -26,6 +26,10 @@ var List = SimpleContainer.extend(function(_super) {
 				var root = document.createElement('div');
 				root.className = 'list';
 				return root;
+			},
+			componentWillMount: function() {
+				console.log("list will mount");
+				_super.componentWillMount.call(this);
 			}
 		}
 	]
@@ -45,6 +49,9 @@ var Child = SimpleComponent.extend(function(_super) {
 			},
 			componentWillMount: function() {
 				console.log("child %s will mount", this._className);
+			},
+			_render: function() {
+				console.log("child %s is rendering", this._className);
 			}
 		}
 	]
@@ -66,9 +73,19 @@ window.init = function() {
 
 	l1.addChildComponent(c1);
 	l1.addChildComponent(c2);
+	
 	l2.addChildComponent(c3);
 	l1.removeChildComponent(c2);
 	l2.addChildComponent(c2);
+
+	l2.removeChildComponent(c3);
+	l2.addChildComponent(c3);
+
+	for (var i = 0; i < 100; ++i) {
+		c1.render();
+		c2.render();
+		c3.render();
+	}
 
 	setTimeout(function() {
 		root.addChildComponent(l2);
