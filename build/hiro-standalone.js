@@ -109,14 +109,17 @@ module.exports = {
 
     _attachChildComponentViaElement: function(component, el) {
         this._renderer.attachComponentViaElement(this, component, el);
+        return component;
     },
 
     _attachChildComponentByReplacingElement: function(component, el) {
         this._renderer.attachComponentByReplacingElement(this, component, el);
+        return component;
     },
 
     _detachChildComponent: function(component) {
         this._renderer.detachComponentViaElement(this, component);
+        return component;
     },
 
     _initComponent: function(componentId) {
