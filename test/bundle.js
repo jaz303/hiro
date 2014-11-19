@@ -1,4 +1,4 @@
-(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({"/Users/jason/dev/projects/components/SimpleComponent.js":[function(require,module,exports){
+(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({"/Users/jason/dev/projects/hiro/SimpleComponent.js":[function(require,module,exports){
 var nextComponentId = 1;
 
 var Class = require('classkit').Class;
@@ -40,7 +40,7 @@ var SimpleComponent = module.exports = Class.extend(function(_super) {
     ];
 
 });
-},{"./global_queue":"/Users/jason/dev/projects/components/global_queue.js","./mixin":"/Users/jason/dev/projects/components/mixin.js","classkit":"/Users/jason/dev/projects/components/node_modules/classkit/index.js"}],"/Users/jason/dev/projects/components/SimpleContainer.js":[function(require,module,exports){
+},{"./global_queue":"/Users/jason/dev/projects/hiro/global_queue.js","./mixin":"/Users/jason/dev/projects/hiro/mixin.js","classkit":"/Users/jason/dev/projects/hiro/node_modules/classkit/index.js"}],"/Users/jason/dev/projects/hiro/SimpleContainer.js":[function(require,module,exports){
 var SimpleComponent = require('./SimpleComponent');
 
 var SimpleContainer = module.exports = SimpleComponent.extend(function(_super) {
@@ -68,9 +68,9 @@ var SimpleContainer = module.exports = SimpleComponent.extend(function(_super) {
     ];
 
 });
-},{"./SimpleComponent":"/Users/jason/dev/projects/components/SimpleComponent.js"}],"/Users/jason/dev/projects/components/global_queue.js":[function(require,module,exports){
+},{"./SimpleComponent":"/Users/jason/dev/projects/hiro/SimpleComponent.js"}],"/Users/jason/dev/projects/hiro/global_queue.js":[function(require,module,exports){
 module.exports = require('./queue')(require('render-q')(window));
-},{"./queue":"/Users/jason/dev/projects/components/queue.js","render-q":"/Users/jason/dev/projects/components/node_modules/render-q/index.js"}],"/Users/jason/dev/projects/components/mixin.js":[function(require,module,exports){
+},{"./queue":"/Users/jason/dev/projects/hiro/queue.js","render-q":"/Users/jason/dev/projects/hiro/node_modules/render-q/index.js"}],"/Users/jason/dev/projects/hiro/mixin.js":[function(require,module,exports){
 var EMPTY_HINTS = { all: true };
 
 module.exports = {
@@ -80,6 +80,10 @@ module.exports = {
 
     getComponentRootNode: function() {
         throw new Error("you must override getComponentRootNode()");
+    },
+
+    _layout: function() {
+        /* override this method with custom layout logic */
     },
 
     _render: function(hints) {
@@ -110,6 +114,14 @@ module.exports = {
         this._componentIsRoot = true;
     },
 
+    layout: function() {
+        this._renderer.layoutComponent(this);
+    },
+
+    layoutImmediately: function() {
+        this._layout();
+    },
+
     render: function(hint) {
         if (hint) {
             if (this._componentRenderHints === null) {
@@ -130,21 +142,24 @@ module.exports = {
         }
     },
 
-    componentWillMount: function() { this._callOnChildComponents('componentWillMount'); },
-    componentDidMount: function() { this._callOnChildComponents('componentDidMount'); },
-    componentWillUnmount: function() { this._callOnChildComponents('componentWillUnmount'); },
-    componentDidUnmount: function() { this._callOnChildComponents('componentDidUnmount'); },
+    componentWillMount:     function() { this._callOnChildComponents('componentWillMount'); },
+    componentDidMount:      function() { this._callOnChildComponents('componentDidMount'); },
+    componentWillUnmount:   function() { this._callOnChildComponents('componentWillUnmount'); },
+    componentDidUnmount:    function() { this._callOnChildComponents('componentDidUnmount'); },
 
     _attachChildComponentViaElement: function(component, el) {
         this._renderer.attachComponentViaElement(this, component, el);
+        return component;
     },
 
     _attachChildComponentByReplacingElement: function(component, el) {
         this._renderer.attachComponentByReplacingElement(this, component, el);
+        return component;
     },
 
     _detachChildComponent: function(component) {
         this._renderer.detachComponentViaElement(this, component);
+        return component;
     },
 
     _initComponent: function(componentId) {
@@ -153,6 +168,7 @@ module.exports = {
         this._componentId = componentId;
         this._componentAttachedParent = null;
         this._componentAttachedChildren = null;
+        this._componentLayoutState = null;
     },
 
     _callOnChildComponents: function(method) {
@@ -164,7 +180,7 @@ module.exports = {
     }
 
 };
-},{}],"/Users/jason/dev/projects/components/node_modules/classkit/index.js":[function(require,module,exports){
+},{}],"/Users/jason/dev/projects/hiro/node_modules/classkit/index.js":[function(require,module,exports){
 exports.Class = Class;
 
 function Class() {};
@@ -237,7 +253,7 @@ function makeDelegate(member, method) {
     return target[method].apply(target, arguments);
   }
 }
-},{}],"/Users/jason/dev/projects/components/node_modules/render-q/index.js":[function(require,module,exports){
+},{}],"/Users/jason/dev/projects/hiro/node_modules/render-q/index.js":[function(require,module,exports){
 module.exports = function(win) {
 
     var rendering   = false;
@@ -316,7 +332,7 @@ module.exports = function(win) {
     return enqueue;
 
 }
-},{}],"/Users/jason/dev/projects/components/private/UpdateSet.js":[function(require,module,exports){
+},{}],"/Users/jason/dev/projects/hiro/private/UpdateSet.js":[function(require,module,exports){
 module.exports = UpdateSet;
 
 function UpdateSet() {
@@ -349,103 +365,184 @@ UpdateSet.prototype.forEach = function(fn) {
         }
     }
 };
-},{}],"/Users/jason/dev/projects/components/queue.js":[function(require,module,exports){
+},{}],"/Users/jason/dev/projects/hiro/private/hierarchy.js":[function(require,module,exports){
+exports.append  = append;
+exports.replace = replace;
+exports.remove  = remove;
+
+function append(parentComponent, childComponent, targetElement) {
+    insert(parentComponent, childComponent, targetElement, false);
+}
+
+function replace(parentComponent, childComponent, targetElement) {
+    insert(parentComponent, childComponent, targetElement, true);
+}
+
+function insert(parentComponent, childComponent, targetElement, replace) {
+
+    var currentParent   = childComponent._componentAttachedParent;
+    var rootNode        = childComponent.getComponentRootNode();
+    var wasMounted      = false;
+
+    if (currentParent) {
+        wasMounted = currentParent.isComponentMounted();
+        rootNode.parentNode.removeChild(rootNode);
+        var ch = currentParent._componentAttachedChildren;
+        ch.splice(ch.indexOf(childComponent), 1);
+    }
+
+    var willMount = parentComponent.isComponentMounted() && !wasMounted;
+
+    if (willMount) {
+        childComponent.componentWillMount();
+    }
+
+    if (replace) {
+        targetElement.parentNode.replaceChild(rootNode, targetElement);
+    } else {
+        targetElement.appendChild(rootNode);    
+    }
+
+    childComponent._componentAttachedParent = parentComponent;
+    (parentComponent._componentAttachedChildren
+        || (parentComponent._componentAttachedChildren = [])).push(childComponent);
+
+    if (willMount) {
+        childComponent.componentDidMount();
+    }
+
+}
+
+function remove(parentComponent, childComponent) {
+
+    var currentParent = childComponent._componentAttachedParent;
+    if (!currentParent) {
+        return;
+    }
+
+    var rootNode = childComponent.getComponentRootNode();
+    var wasMounted = currentParent.isComponentMounted();
+
+    if (wasMounted) {
+        childComponent.componentWillUnmount();
+    }
+
+    rootNode.parentNode.removeChild(rootNode);
+    var ch = currentParent._componentAttachedChildren;
+    ch.splice(ch.indexOf(childComponent), 1);
+    childComponent._componentAttachedParent = null;
+
+    if (wasMounted) {
+        childComponent.componentDidUnmount();
+    }
+
+}
+},{}],"/Users/jason/dev/projects/hiro/queue.js":[function(require,module,exports){
 module.exports = create;
 
-var UpdateSet = require('./private/UpdateSet');
+var UpdateSet   = require('./private/UpdateSet');
+
+var hierarchy   = require('./private/hierarchy');
+var append      = hierarchy.append;
+var replace     = hierarchy.replace;
+var remove      = hierarchy.remove;
 
 function create(q) {
 
     var render  = q;
     var after   = q.after;
 
-	var scheduled = false;
-    var hierarchyUpdates = new UpdateSet();
-    var invalidComponents = {};
+    var scheduled           = false;
+    var hierarchyUpdates    = new UpdateSet();
+    var layoutRequired      = {};
+    var layoutPerformed     = null;
+    var invalidComponents   = {};
+    var phase               = null;
 
-    function append(parentComponent, childComponent, targetElement) {
-        insert(parentComponent, childComponent, targetElement, false);
-    }
-
-    function replace(parentComponent, childComponent, targetElement) {
-    	insert(parentComponent, childComponent, targetElement, true);
-    }
-
-    function insert(parentComponent, childComponent, targetElement, replace) {
-
-    	var currentParent   = childComponent._componentAttachedParent;
-    	var rootNode        = childComponent.getComponentRootNode();
-    	var wasMounted      = false;
-
-    	if (currentParent) {
-    	    wasMounted = currentParent.isComponentMounted();
-    	    rootNode.parentNode.removeChild(rootNode);
-    	    var ch = currentParent._componentAttachedChildren;
-    	    ch.splice(ch.indexOf(childComponent), 1);
-    	}
-
-    	var willMount = parentComponent.isComponentMounted() && !wasMounted;
-
-    	if (willMount) {
-    	    childComponent.componentWillMount();
-    	}
-
-    	if (replace) {
-    		targetElement.parentNode.replaceChild(rootNode, targetElement);
-    	} else {
-    		targetElement.appendChild(rootNode);	
-    	}
-
-    	childComponent._componentAttachedParent = parentComponent;
-    	(parentComponent._componentAttachedChildren
-    	    || (parentComponent._componentAttachedChildren = [])).push(childComponent);
-
-    	if (willMount) {
-    	    childComponent.componentDidMount();
-    	}
-
-    }
-
-    function remove(parentComponent, childComponent) {
-
-        var currentParent = childComponent._componentAttachedParent;
-        if (!currentParent) {
-            return;
-        }
-
-        var rootNode = childComponent.getComponentRootNode();
-        var wasMounted = currentParent.isComponentMounted();
-
-        if (wasMounted) {
-            childComponent.componentWillUnmount();
-        }
-
-        rootNode.parentNode.removeChild(rootNode);
-        var ch = currentParent._componentAttachedChildren;
-        ch.splice(ch.indexOf(childComponent), 1);
-        childComponent._componentAttachedParent = null;
-
-        if (wasMounted) {
-            childComponent.componentDidUnmount();
-        }
-
-    }
+    //
+    // Processing
 
     function process() {
-
         scheduled = false;
+        processHierarchy();
+        processLayout();
+        processRender();
+        phase = null;
+    }
 
+    function processHierarchy() {
+        phase = 'h';
         hierarchyUpdates.forEach(function(op) {
             op[0](op[1], op[2], op[3]);
         });
         hierarchyUpdates.clear();
+    }
 
+    function layoutOne(component) {
+        var cid = component._componentId;
+        if (!layoutPerformed[cid]) {
+            layoutPerformed[cid] = true;
+            component.layoutImmediately();
+        }
+    }
+
+    function tsort() {
+
+        for (var k in layoutRequired) {
+            layoutRequired[k]._componentLayoutState = 0;
+        }
+
+        var sorted = [];
+        for (var k in layoutRequired) {
+            _visit(layoutRequired[k]);
+        }
+
+        return sorted;
+
+        function _visit(c) {
+            if (c._componentLayoutState === 1) {
+                throw new Error("wtf, cycle detected!");
+            } else if (c._componentLayoutState === 0) {
+                c._componentLayoutState = 1;
+                var isMounted = null;
+                var tmp = c._componentAttachedParent;
+                while (tmp) {
+                    if (tmp._componentId in layoutRequired) {
+                        isMounted = _visit(tmp);
+                        break;
+                    }
+                    tmp = tmp._componentAttachedParent;
+                }
+                if (isMounted === null) {
+                    isMounted = c.isComponentMounted();
+                }
+                c._componentLayoutState = isMounted ? 2 : 3;
+                if (isMounted === 2) {
+                    sorted.push(c);    
+                }
+            }
+            return c._componentLayoutState === 2;
+        }
+
+    }
+
+    function processLayout() {
+        phase = 'l';
+        layoutPerformed = {};
+        tsort().forEach(layoutOne);
+        layoutPerformed = null;
+    }
+
+    function processRender() {
+        phase = 'r';
         for (var k in invalidComponents) {
             invalidComponents[k].renderImmediately();
         }
         invalidComponents = {};
-
     }
+
+    //
+    //
 
     function schedule() {
         if (!scheduled) {
@@ -454,7 +551,19 @@ function create(q) {
         }
     }
 
+    //
+    // Hierarchy operations
+
+    function assertNotProcessing() {
+        // TODO: it should be OK to relax this restriction as long as the
+        // UpdateSet is adjusted accordingly.
+        if (phase !== null) {
+            throw new Error("component hierarchy cannot be changed during queue processing");
+        }
+    }
+
     q.attachComponentViaElement = function(parentComponent, childComponent, targetElement) {
+        assertNotProcessing();
         hierarchyUpdates.push(
             childComponent._componentId,
             [append, parentComponent, childComponent, targetElement]
@@ -463,6 +572,7 @@ function create(q) {
     }
 
     q.attachComponentByReplacingElement = function(parentComponent, childComponent, targetElement) {
+        assertNotProcessing();
         hierarchyUpdates.push(
             childComponent._componentId,
             [replace, parentComponent, childComponent, targetElement]
@@ -471,6 +581,7 @@ function create(q) {
     }
 
     q.detachComponentViaElement = function(parentComponent, childComponent) {
+        assertNotProcessing();
         hierarchyUpdates.push(
             childComponent._componentId,
             [remove, parentComponent, childComponent, null]
@@ -478,108 +589,132 @@ function create(q) {
         schedule();
     }
 
+    //
+    // Layout
+
+    q.layoutComponent = function(component) {
+        if (phase === 'r') {
+            throw new Error("layout not allowed during the render phase!");
+        } else if (phase === 'l') {
+            layoutOne(component);
+        } else {
+            layoutRequired[component._componentId] = component;
+            schedule();
+        }
+    }
+
+    //
+    // Render
+
     q.renderComponent = function(component) {
-        invalidComponents[component._componentId] = component;
-        schedule();
+        if (phase === 'r') {
+            // TODO: this should really just be pushed onto a list
+            // of pending ops so it can be picked up at the other
+            // end. This works fine for now though.
+            component.renderImmediately();
+        } else {
+            invalidComponents[component._componentId] = component;
+            schedule();
+        }
     }
 
     return q;
 
 }
-},{"./private/UpdateSet":"/Users/jason/dev/projects/components/private/UpdateSet.js"}],"/Users/jason/dev/projects/components/test/main.js":[function(require,module,exports){
-var SimpleComponent	= require('../SimpleComponent');
-var SimpleContainer	= require('../SimpleContainer');
+},{"./private/UpdateSet":"/Users/jason/dev/projects/hiro/private/UpdateSet.js","./private/hierarchy":"/Users/jason/dev/projects/hiro/private/hierarchy.js"}],"/Users/jason/dev/projects/hiro/test/main.js":[function(require,module,exports){
+var SimpleComponent = require('../SimpleComponent');
+var SimpleContainer = require('../SimpleContainer');
 
 var Root = SimpleContainer.extend(function(_super) {
-	return [
-		function() {
-			_super.constructor.call(this);
-		},
-		'methods', {
-			_buildComponent: function() {
-				var root = document.createElement('div');
-				root.className = 'root';
-				return root;
-			}
-		}
-	]
+    return [
+        function() {
+            _super.constructor.call(this);
+        },
+        'methods', {
+            _buildComponent: function() {
+                var root = document.createElement('div');
+                root.className = 'root';
+                return root;
+            }
+        }
+    ]
 });
 
 var List = SimpleContainer.extend(function(_super) {
-	return [
-		function() {
-			_super.constructor.call(this);
-		},
-		'methods', {
-			_buildComponent: function() {
-				var root = document.createElement('div');
-				root.className = 'list';
-				return root;
-			},
-			componentWillMount: function() {
-				console.log("list will mount");
-				_super.componentWillMount.call(this);
-			}
-		}
-	]
+    return [
+        function() {
+            _super.constructor.call(this);
+        },
+        'methods', {
+            _buildComponent: function() {
+                var root = document.createElement('div');
+                root.className = 'list';
+                return root;
+            },
+            componentWillMount: function() {
+                console.log("list will mount");
+                _super.componentWillMount.call(this);
+            }
+        }
+    ]
 });
 
 var Child = SimpleComponent.extend(function(_super) {
-	return [
-		function(className) {
-			this._className = className;
-			_super.constructor.call(this);
-		},
-		'methods', {
-			_buildComponent: function() {
-				var root = document.createElement('div');
-				root.className = 'child ' + this._className;
-				return root;
-			},
-			componentWillMount: function() {
-				console.log("child %s will mount", this._className);
-			},
-			_render: function() {
-				console.log("child %s is rendering", this._className);
-			}
-		}
-	]
+    return [
+        function(className) {
+            this._className = className;
+            _super.constructor.call(this);
+        },
+        'methods', {
+            _buildComponent: function() {
+                var root = document.createElement('div');
+                root.className = 'child ' + this._className;
+                return root;
+            },
+            componentWillMount: function() {
+                console.log("child %s will mount", this._className);
+            },
+            _render: function() {
+                console.log("child %s is rendering", this._className);
+            }
+        }
+    ]
 });
 
 window.init = function() {
 
-	var root = new Root();
-	root.mountAsRootComponent();
+    var root = new Root();
+    root.mountAsRootComponent();
 
-	var l1 = new List();
-	root.addChildComponent(l1);
+    var l1 = new List();
+    root.addChildComponent(l1);
 
-	var l2 = new List();
-	
-	var c1 = new Child('c1');
-	var c2 = new Child('c2');
-	var c3 = new Child('c3');
+    var l2 = new List();
+    
+    var c1 = new Child('c1');
+    var c2 = new Child('c2');
+    var c3 = new Child('c3');
 
-	l1.addChildComponent(c1);
-	l1.addChildComponent(c2);
-	
-	l2.addChildComponent(c3);
-	l1.removeChildComponent(c2);
-	l2.addChildComponent(c2);
+    l1.addChildComponent(c1);
+    l1.addChildComponent(c2);
+    
+    l2.addChildComponent(c3);
+    l1.removeChildComponent(c2);
+    l2.addChildComponent(c2);
 
-	l2.removeChildComponent(c3);
-	l2.addChildComponent(c3);
+    l2.removeChildComponent(c3);
+    l2.addChildComponent(c3);
 
-	for (var i = 0; i < 100; ++i) {
-		c1.render();
-		c2.render();
-		c3.render();
-	}
+    for (var i = 0; i < 100; ++i) {
+        c1.render();
+        c2.render();
+        c3.render();
+    }
 
-	setTimeout(function() {
-		root.addChildComponent(l2);
-	}, 500);
+    setTimeout(function() {
+        root.addChildComponent(l2);
+    }, 500);
 
 
 }
-},{"../SimpleComponent":"/Users/jason/dev/projects/components/SimpleComponent.js","../SimpleContainer":"/Users/jason/dev/projects/components/SimpleContainer.js"}]},{},["/Users/jason/dev/projects/components/test/main.js"]);
+},{"../SimpleComponent":"/Users/jason/dev/projects/hiro/SimpleComponent.js","../SimpleContainer":"/Users/jason/dev/projects/hiro/SimpleContainer.js"}]},{},["/Users/jason/dev/projects/hiro/test/main.js"]);

@@ -9,6 +9,10 @@ module.exports = {
         throw new Error("you must override getComponentRootNode()");
     },
 
+    _layout: function() {
+        /* override this method with custom layout logic */
+    },
+
     _render: function(hints) {
         /* override this method with custom rendering logic */
     },
@@ -37,6 +41,14 @@ module.exports = {
         this._componentIsRoot = true;
     },
 
+    layout: function() {
+        this._renderer.layoutComponent(this);
+    },
+
+    layoutImmediately: function() {
+        this._layout();
+    },
+
     render: function(hint) {
         if (hint) {
             if (this._componentRenderHints === null) {
@@ -57,10 +69,10 @@ module.exports = {
         }
     },
 
-    componentWillMount: function() { this._callOnChildComponents('componentWillMount'); },
-    componentDidMount: function() { this._callOnChildComponents('componentDidMount'); },
-    componentWillUnmount: function() { this._callOnChildComponents('componentWillUnmount'); },
-    componentDidUnmount: function() { this._callOnChildComponents('componentDidUnmount'); },
+    componentWillMount:     function() { this._callOnChildComponents('componentWillMount'); },
+    componentDidMount:      function() { this._callOnChildComponents('componentDidMount'); },
+    componentWillUnmount:   function() { this._callOnChildComponents('componentWillUnmount'); },
+    componentDidUnmount:    function() { this._callOnChildComponents('componentDidUnmount'); },
 
     _attachChildComponentViaElement: function(component, el) {
         this._renderer.attachComponentViaElement(this, component, el);
@@ -83,6 +95,7 @@ module.exports = {
         this._componentId = componentId;
         this._componentAttachedParent = null;
         this._componentAttachedChildren = null;
+        this._componentLayoutState = null;
     },
 
     _callOnChildComponents: function(method) {

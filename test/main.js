@@ -1,95 +1,95 @@
-var SimpleComponent	= require('../SimpleComponent');
-var SimpleContainer	= require('../SimpleContainer');
+var SimpleComponent = require('../SimpleComponent');
+var SimpleContainer = require('../SimpleContainer');
 
 var Root = SimpleContainer.extend(function(_super) {
-	return [
-		function() {
-			_super.constructor.call(this);
-		},
-		'methods', {
-			_buildComponent: function() {
-				var root = document.createElement('div');
-				root.className = 'root';
-				return root;
-			}
-		}
-	]
+    return [
+        function() {
+            _super.constructor.call(this);
+        },
+        'methods', {
+            _buildComponent: function() {
+                var root = document.createElement('div');
+                root.className = 'root';
+                return root;
+            }
+        }
+    ]
 });
 
 var List = SimpleContainer.extend(function(_super) {
-	return [
-		function() {
-			_super.constructor.call(this);
-		},
-		'methods', {
-			_buildComponent: function() {
-				var root = document.createElement('div');
-				root.className = 'list';
-				return root;
-			},
-			componentWillMount: function() {
-				console.log("list will mount");
-				_super.componentWillMount.call(this);
-			}
-		}
-	]
+    return [
+        function() {
+            _super.constructor.call(this);
+        },
+        'methods', {
+            _buildComponent: function() {
+                var root = document.createElement('div');
+                root.className = 'list';
+                return root;
+            },
+            componentWillMount: function() {
+                console.log("list will mount");
+                _super.componentWillMount.call(this);
+            }
+        }
+    ]
 });
 
 var Child = SimpleComponent.extend(function(_super) {
-	return [
-		function(className) {
-			this._className = className;
-			_super.constructor.call(this);
-		},
-		'methods', {
-			_buildComponent: function() {
-				var root = document.createElement('div');
-				root.className = 'child ' + this._className;
-				return root;
-			},
-			componentWillMount: function() {
-				console.log("child %s will mount", this._className);
-			},
-			_render: function() {
-				console.log("child %s is rendering", this._className);
-			}
-		}
-	]
+    return [
+        function(className) {
+            this._className = className;
+            _super.constructor.call(this);
+        },
+        'methods', {
+            _buildComponent: function() {
+                var root = document.createElement('div');
+                root.className = 'child ' + this._className;
+                return root;
+            },
+            componentWillMount: function() {
+                console.log("child %s will mount", this._className);
+            },
+            _render: function() {
+                console.log("child %s is rendering", this._className);
+            }
+        }
+    ]
 });
 
 window.init = function() {
 
-	var root = new Root();
-	root.mountAsRootComponent();
+    var root = new Root();
+    root.mountAsRootComponent();
 
-	var l1 = new List();
-	root.addChildComponent(l1);
+    var l1 = new List();
+    root.addChildComponent(l1);
 
-	var l2 = new List();
-	
-	var c1 = new Child('c1');
-	var c2 = new Child('c2');
-	var c3 = new Child('c3');
+    var l2 = new List();
+    
+    var c1 = new Child('c1');
+    var c2 = new Child('c2');
+    var c3 = new Child('c3');
 
-	l1.addChildComponent(c1);
-	l1.addChildComponent(c2);
-	
-	l2.addChildComponent(c3);
-	l1.removeChildComponent(c2);
-	l2.addChildComponent(c2);
+    l1.addChildComponent(c1);
+    l1.addChildComponent(c2);
+    
+    l2.addChildComponent(c3);
+    l1.removeChildComponent(c2);
+    l2.addChildComponent(c2);
 
-	l2.removeChildComponent(c3);
-	l2.addChildComponent(c3);
+    l2.removeChildComponent(c3);
+    l2.addChildComponent(c3);
 
-	for (var i = 0; i < 100; ++i) {
-		c1.render();
-		c2.render();
-		c3.render();
-	}
+    for (var i = 0; i < 100; ++i) {
+        c1.render();
+        c2.render();
+        c3.render();
+    }
 
-	setTimeout(function() {
-		root.addChildComponent(l2);
-	}, 500);
+    setTimeout(function() {
+        root.addChildComponent(l2);
+    }, 500);
 
 
 }
