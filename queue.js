@@ -77,7 +77,7 @@ function create(q) {
                     isMounted = c.isComponentMounted();
                 }
                 c._componentLayoutState = isMounted ? 2 : 3;
-                if (isMounted === 2) {
+                if (isMounted) {
                     sorted.push(c);    
                 }
             }
@@ -159,7 +159,9 @@ function create(q) {
             layoutOne(component);
         } else {
             layoutRequired[component._componentId] = component;
-            schedule();
+            if (phase === null) {
+                schedule();    
+            }
         }
     }
 
