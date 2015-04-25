@@ -23,49 +23,44 @@ window.init = function() {
 
 }
 
-var nextId = 1;
+var SimpleComponent = require('../lib/SimpleComponent');
 
-function TestComponent(color) {
-    
-    this.id = 'component-' + (nextId++);
-    this.root = document.createElement('div');
-    this.root.style.padding = '30px';
-    this.root.style.backgroundColor = color;
+var TestComponent = SimpleComponent.extend(function(_super) {
+    return [
+        function(color) {
+            _super.constructor.call(this);
+            this._root.style.backgroundColor = color;
+        },
+        'methods', {
+            _buildComponent: function() {
+                var root = document.createElement('div');
+                root.style.padding = '30px';
 
-    var title = document.createElement('div');
-    title.textContent = 'This is the mountpoint';
-    this.root.appendChild(title);
+                var title = document.createElement('div');
+                title.textContent = 'This is the mountpoint';
+                root.appendChild(title);
 
-    var children = document.createElement('div');
-    this.root.appendChild(children);
+                var children = document.createElement('div');
+                root.appendChild(children);
 
-    Hiro.componentCreated(this);
+                this.mountpoint = Hiro.addMountpoint(this, title);
+                this.children = Hiro.addCollection(this, children);
 
-    this.mountpoint = Hiro.addMountpoint(this, title);
-    this.children = Hiro.addCollection(this, children);
-
-}
-
-TestComponent.prototype.setTitleComponent = function(component) {
-    if (component) {
-        this.mountpoint.setComponent(component);
-    } else {
-        this.mountpoint.removeComponent();
-    }
-}
-
-TestComponent.prototype.getComponentId = function() {
-    return this.id;
-}
-
-TestComponent.prototype.getComponentRoot = function() {
-    return this.root;
-}
-
-TestComponent.prototype.append = function(component) {
-    this.children.append(component);
-}
-
+                return root;
+            },
+            setTitleComponent: function(component) {
+                if (component) {
+                    this.mountpoint.setComponent(component);
+                } else {
+                    this.mountpoint.removeComponent();
+                }
+            },
+            append: function(component) {
+                this.children.append(component);
+            }
+        }
+    ]
+});
 
 
 // var SimpleComponent = require('../SimpleComponent');

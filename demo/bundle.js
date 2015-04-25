@@ -24,49 +24,44 @@ window.init = function() {
 
 }
 
-var nextId = 1;
+var SimpleComponent = require('../lib/SimpleComponent');
 
-function TestComponent(color) {
-    
-    this.id = 'component-' + (nextId++);
-    this.root = document.createElement('div');
-    this.root.style.padding = '30px';
-    this.root.style.backgroundColor = color;
+var TestComponent = SimpleComponent.extend(function(_super) {
+    return [
+        function(color) {
+            _super.constructor.call(this);
+            this._root.style.backgroundColor = color;
+        },
+        'methods', {
+            _buildComponent: function() {
+                var root = document.createElement('div');
+                root.style.padding = '30px';
 
-    var title = document.createElement('div');
-    title.textContent = 'This is the mountpoint';
-    this.root.appendChild(title);
+                var title = document.createElement('div');
+                title.textContent = 'This is the mountpoint';
+                root.appendChild(title);
 
-    var children = document.createElement('div');
-    this.root.appendChild(children);
+                var children = document.createElement('div');
+                root.appendChild(children);
 
-    Hiro.componentCreated(this);
+                this.mountpoint = Hiro.addMountpoint(this, title);
+                this.children = Hiro.addCollection(this, children);
 
-    this.mountpoint = Hiro.addMountpoint(this, title);
-    this.children = Hiro.addCollection(this, children);
-
-}
-
-TestComponent.prototype.setTitleComponent = function(component) {
-    if (component) {
-        this.mountpoint.setComponent(component);
-    } else {
-        this.mountpoint.removeComponent();
-    }
-}
-
-TestComponent.prototype.getComponentId = function() {
-    return this.id;
-}
-
-TestComponent.prototype.getComponentRoot = function() {
-    return this.root;
-}
-
-TestComponent.prototype.append = function(component) {
-    this.children.append(component);
-}
-
+                return root;
+            },
+            setTitleComponent: function(component) {
+                if (component) {
+                    this.mountpoint.setComponent(component);
+                } else {
+                    this.mountpoint.removeComponent();
+                }
+            },
+            append: function(component) {
+                this.children.append(component);
+            }
+        }
+    ]
+});
 
 
 // var SimpleComponent = require('../SimpleComponent');
@@ -164,7 +159,7 @@ TestComponent.prototype.append = function(component) {
 
 
 // }
-},{"../":"/Users/jason/dev/projects/hiro/index.js"}],"/Users/jason/dev/projects/hiro/index.js":[function(require,module,exports){
+},{"../":"/Users/jason/dev/projects/hiro/index.js","../lib/SimpleComponent":"/Users/jason/dev/projects/hiro/lib/SimpleComponent.js"}],"/Users/jason/dev/projects/hiro/index.js":[function(require,module,exports){
 // TODO: iterate debug method that compares live/target trees after each sync
 // TODO: housekeeping; lifecycle callbacks
 // TODO: destroy callback
@@ -558,7 +553,46 @@ Mountpoint.prototype.syncImmediately = function() {
 	}
 	this._dirty = false;
 }
-},{"./instance":"/Users/jason/dev/projects/hiro/lib/instance.js","./node_key":"/Users/jason/dev/projects/hiro/lib/node_key.js"}],"/Users/jason/dev/projects/hiro/lib/instance.js":[function(require,module,exports){
+},{"./instance":"/Users/jason/dev/projects/hiro/lib/instance.js","./node_key":"/Users/jason/dev/projects/hiro/lib/node_key.js"}],"/Users/jason/dev/projects/hiro/lib/SimpleComponent.js":[function(require,module,exports){
+var nextComponentId = 1;
+
+var Class = require('classkit').Class;
+var Hiro = require('./instance');
+
+var SimpleComponent = module.exports = Class.extend(function(_super) {
+
+    return [
+
+        function() {
+
+            // call the component initialiser to set up necessary
+            // component properties
+            this._initComponent(nextComponentId++);
+
+            // build component structure
+            this._root = this._buildComponent();
+
+        },
+
+        'methods', require('./mixin'),
+        'methods', {
+
+            getComponentRoot: function() {
+                return this._root;
+            },
+
+            // this method must be overridden to return the root DOM node for
+            // this component.
+            _buildComponent: function() {
+                throw new Error("you must override _buildComponent()");
+            }
+
+        }
+
+    ];
+
+});
+},{"./instance":"/Users/jason/dev/projects/hiro/lib/instance.js","./mixin":"/Users/jason/dev/projects/hiro/lib/mixin.js","classkit":"/Users/jason/dev/projects/hiro/node_modules/classkit/index.js"}],"/Users/jason/dev/projects/hiro/lib/instance.js":[function(require,module,exports){
 var Hiro = module.exports = {};
 
 var Collection = require('./Collection');
@@ -659,7 +693,26 @@ function syncImmediately() {
 	}
 
 }
-},{"./Collection":"/Users/jason/dev/projects/hiro/lib/Collection.js","./Mountpoint":"/Users/jason/dev/projects/hiro/lib/Mountpoint.js","./node_key":"/Users/jason/dev/projects/hiro/lib/node_key.js","./raf":"/Users/jason/dev/projects/hiro/lib/raf.js"}],"/Users/jason/dev/projects/hiro/lib/node_key.js":[function(require,module,exports){
+},{"./Collection":"/Users/jason/dev/projects/hiro/lib/Collection.js","./Mountpoint":"/Users/jason/dev/projects/hiro/lib/Mountpoint.js","./node_key":"/Users/jason/dev/projects/hiro/lib/node_key.js","./raf":"/Users/jason/dev/projects/hiro/lib/raf.js"}],"/Users/jason/dev/projects/hiro/lib/mixin.js":[function(require,module,exports){
+var Hiro = require('./instance');
+
+module.exports = {
+
+	getComponentId: function() {
+		return this._componentId;
+	},
+
+	getComponentRoot: function() {
+		throw new Error("you must override getComponentRoot()");
+	},
+
+	_initComponent: function(componentId) {
+		this._componentId = componentId;
+		Hiro.componentCreated(this);
+	}
+
+};
+},{"./instance":"/Users/jason/dev/projects/hiro/lib/instance.js"}],"/Users/jason/dev/projects/hiro/lib/node_key.js":[function(require,module,exports){
 module.exports =  (typeof Symbol === 'undefined')
                 	? '__hiroNode__'
                 	: Symbol("hiroNode");
@@ -672,4 +725,77 @@ module.exports = window.requestAnimationFrame
 		            || window.oRequestAnimationFrame
 		            || function(cb) { setTimeout(cb, 0); };
 
+},{}],"/Users/jason/dev/projects/hiro/node_modules/classkit/index.js":[function(require,module,exports){
+exports.Class = Class;
+
+function Class() {};
+  
+Class.prototype.method = function(name) {
+  var self = this, method = this[name];
+  return function() { return method.apply(self, arguments); }
+}
+
+Class.prototype.lateBoundMethod = function(name) {
+  var self = this;
+  return function() { return self[name].apply(self, arguments); }
+}
+
+Class.extend = function(fn) {
+
+  var features;
+
+  if (fn) {
+    // backwards compatibility
+    if (fn.length > 1) {
+      features = fn(this, this.prototype);
+    } else {
+      features = fn(this.prototype);
+    }
+  } else {
+    features = [function() {}];
+  }
+  
+  var ctor = features[0];
+  ctor._super = this;
+  ctor.prototype = Object.create(this.prototype);
+  ctor.prototype.constructor = ctor;
+  
+  ctor.extend = this.extend;
+  ctor.Features = Object.create(this.Features);
+    
+  for (var i = 1; i < features.length; i += 2) {
+    this.Features[features[i]](ctor, features[i+1]);
+  }
+  
+  return ctor;
+  
+};
+
+Class.Features = {
+  methods: function(ctor, methods) {
+    for (var methodName in methods) {
+      ctor.prototype[methodName] = methods[methodName];
+    }
+  },
+  properties: function(ctor, properties) {
+    Object.defineProperties(ctor.prototype, properties);
+  },
+  delegate: function(ctor, delegates) {
+    for (var methodName in delegates) {
+      var target = delegates[methodName];
+      if (Array.isArray(target)) {
+        ctor.prototype[methodName] = makeDelegate(target[0], target[1]);
+      } else {
+        ctor.prototype[methodName] = makeDelegate(target, methodName);
+      }
+    }
+  }
+};
+
+function makeDelegate(member, method) {
+  return function() {
+    var target = this[member];
+    return target[method].apply(target, arguments);
+  }
+}
 },{}]},{},["/Users/jason/dev/projects/hiro/demo/main.js"]);
