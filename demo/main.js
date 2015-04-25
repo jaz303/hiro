@@ -17,7 +17,6 @@ window.init = function() {
     Hiro.append(root);
 
     setTimeout(function() {
-        console.log("boom...");
         c2.setTitleComponent(null);
     }, 2000);
 
@@ -28,15 +27,22 @@ var SimpleComponent = require('../lib/SimpleComponent');
 var TestComponent = SimpleComponent.extend(function(_super) {
     return [
         function(color) {
+            
             _super.constructor.call(this);
             this._root.style.backgroundColor = color;
+
+            var self = this;
+            setInterval(function() {
+                self.render();
+            }, 10);
+
         },
         'methods', {
             _buildComponent: function() {
                 var root = document.createElement('div');
                 root.style.padding = '30px';
 
-                var title = document.createElement('div');
+                var title = this.title = document.createElement('div');
                 title.textContent = 'This is the mountpoint';
                 root.appendChild(title);
 
@@ -57,6 +63,9 @@ var TestComponent = SimpleComponent.extend(function(_super) {
             },
             append: function(component) {
                 this.children.append(component);
+            },
+            _renderComponent: function() {
+                this.title.textContent = Math.floor(Date.now() / 1000);
             }
         }
     ]

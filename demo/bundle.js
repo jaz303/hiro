@@ -18,7 +18,6 @@ window.init = function() {
     Hiro.append(root);
 
     setTimeout(function() {
-        console.log("boom...");
         c2.setTitleComponent(null);
     }, 2000);
 
@@ -29,15 +28,22 @@ var SimpleComponent = require('../lib/SimpleComponent');
 var TestComponent = SimpleComponent.extend(function(_super) {
     return [
         function(color) {
+            
             _super.constructor.call(this);
             this._root.style.backgroundColor = color;
+
+            var self = this;
+            setInterval(function() {
+                self.render();
+            }, 10);
+
         },
         'methods', {
             _buildComponent: function() {
                 var root = document.createElement('div');
                 root.style.padding = '30px';
 
-                var title = document.createElement('div');
+                var title = this.title = document.createElement('div');
                 title.textContent = 'This is the mountpoint';
                 root.appendChild(title);
 
@@ -58,6 +64,9 @@ var TestComponent = SimpleComponent.extend(function(_super) {
             },
             append: function(component) {
                 this.children.append(component);
+            },
+            _renderComponent: function() {
+                this.title.textContent = Math.floor(Date.now() / 1000);
             }
         }
     ]
@@ -553,6 +562,7 @@ Mountpoint.prototype.syncImmediately = function() {
 	}
 	this._dirty = false;
 }
+
 },{"./instance":"/Users/jason/dev/projects/hiro/lib/instance.js","./node_key":"/Users/jason/dev/projects/hiro/lib/node_key.js"}],"/Users/jason/dev/projects/hiro/lib/SimpleComponent.js":[function(require,module,exports){
 var nextComponentId = 1;
 
@@ -595,6 +605,11 @@ var SimpleComponent = module.exports = Class.extend(function(_super) {
 },{"./instance":"/Users/jason/dev/projects/hiro/lib/instance.js","./mixin":"/Users/jason/dev/projects/hiro/lib/mixin.js","classkit":"/Users/jason/dev/projects/hiro/node_modules/classkit/index.js"}],"/Users/jason/dev/projects/hiro/lib/instance.js":[function(require,module,exports){
 var Hiro = module.exports = {};
 
+var IDLE		= 1,
+	HIERARCHY	= 2,
+	RENDER 		= 3,
+	AFTER 		= 4;
+
 var Collection = require('./Collection');
 var Mountpoint = require('./Mountpoint');
 var N = require('./node_key');
@@ -603,7 +618,9 @@ var raf = require('./raf');
 var rootComponent 	= null;
 var rootCollection	= null;
 
+var phase 			= IDLE;
 var changes 		= [];
+var renders 		= [];
 var syncTimeout 	= null;
 var afterUpdate 	= [];
 
@@ -636,6 +653,21 @@ Hiro.remove = function(component) {
 
 Hiro.componentCreated = function(component) {
 	component[N] = new Node(component);
+}
+
+Hiro.renderRequested = function(component) {
+	if (phase === RENDER) {
+		// TODO: this should really just be pushed onto a list
+		// of pending ops so it can be picked up at the other
+		// end. This works fine for now though.
+		component.renderImmediately();
+	} else {
+		if (renders.indexOf(component) < 0) {
+			renders.push(component);
+			scheduleSync();
+		}	
+	}
+	
 }
 
 Hiro.logChange = function(thing) {
@@ -674,12 +706,38 @@ function scheduleSync() {
 function syncImmediately() {
 	
 	syncTimeout = null;
-	
-	changes.forEach(function(changed) {
-		changed.syncImmediately();
-	});
-	changes = [];
 
+	phase = HIERARCHY;
+	
+	if (changes.length) {
+		changes.forEach(function(changed) {
+			changed.syncImmediately();
+		});
+		changes = [];	
+	}
+
+	phase = RENDER;
+
+	if (renders.length) {
+		renders.forEach(function(component) {
+			
+			component.renderImmediately();	
+
+			// TODO: come back to this... the collections currently aren't
+			// propagating changes to the mount state...
+			// if (component[N].__liveIsMounted) {
+			// 	component.renderImmediately();	
+			// } else {
+			// 	// TODO: should we put this into some deferred list?
+			// 	// or mark the fact render is pending?
+			// }
+
+		});
+		renders = [];
+	}
+
+	phase = AFTER;
+	
 	if (afterUpdate.length) {
 	    var nowAfter = after;
 	    after = [];
@@ -692,9 +750,13 @@ function syncImmediately() {
 	    });
 	}
 
+	phase = IDLE;
+
 }
 },{"./Collection":"/Users/jason/dev/projects/hiro/lib/Collection.js","./Mountpoint":"/Users/jason/dev/projects/hiro/lib/Mountpoint.js","./node_key":"/Users/jason/dev/projects/hiro/lib/node_key.js","./raf":"/Users/jason/dev/projects/hiro/lib/raf.js"}],"/Users/jason/dev/projects/hiro/lib/mixin.js":[function(require,module,exports){
 var Hiro = require('./instance');
+
+var EMPTY_HINTS = { all: true };
 
 module.exports = {
 
@@ -706,9 +768,34 @@ module.exports = {
 		throw new Error("you must override getComponentRoot()");
 	},
 
+	render: function(hint) {
+		if (hint) {
+			if (this._componentRenderHints === null) {
+				this._componentRenderHints = {};
+			}
+			this._componentRenderHints[hint] = true;
+		} else if (this._componentRenderHints) {
+			this._componentRenderHints.all = true;
+		}
+		Hiro.renderRequested(this);
+	},
+
+	renderImmediately: function() {
+		var hints = this._componentRenderHints;
+		this._renderComponent(hints || EMPTY_HINTS);
+		if (hints) {
+			for (var k in hints) hints[k] = false;
+		}
+	},
+
 	_initComponent: function(componentId) {
 		this._componentId = componentId;
+		this._componentRenderHints = null;
 		Hiro.componentCreated(this);
+	},
+
+	_renderComponent: function(hints) {
+
 	}
 
 };
