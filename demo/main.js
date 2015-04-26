@@ -20,6 +20,10 @@ window.init = function() {
         c2.setTitleComponent(null);
     }, 2000);
 
+    setTimeout(function() {
+        root.setTitleComponent(c3);
+    }, 4000);
+
 }
 
 var SimpleComponent = require('../lib/SimpleComponent');

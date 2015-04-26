@@ -21,6 +21,10 @@ window.init = function() {
         c2.setTitleComponent(null);
     }, 2000);
 
+    setTimeout(function() {
+        root.setTitleComponent(c3);
+    }, 4000);
+
 }
 
 var SimpleComponent = require('../lib/SimpleComponent');
@@ -467,44 +471,85 @@ Collection.prototype.syncImmediately = function() {
 	    if (target === live) {
 	        ++tp; ++lp;
 	    } else {
+	    	
 	    	this._el.insertBefore(
 	            target.getComponentRoot(),
 	            live.getComponentRoot()
 	        );
+
+	        liveList.splice(lp - 1, 0, liveNodes[target.getComponentId()]);
+
 	        // TODO: should probably store the record of what it was mounted against
 	        // then we can check if it's actually changed.
-	        target[N].__liveParent = parentComponent;
-	        target[N].__liveIsMounted = parentIsMounted;
-	        // TODO: this isn't quite right
-	        liveList.splice(lp - 1, 0, liveNodes[target.getComponentId()]);
+	        target[N].__liveParent = this._component;
+	        target[N].setMounted(parentIsMounted);
+			// TODO: this isn't quite right?
+	        
 	        tp++;
+
 	    }
 	}
 
 	if (tp < targetList.length) {
 	    while (tp < targetList.length) {
+	        
 	        var target = targetList[tp];
+	        
 	        this._el.appendChild(target.getComponentRoot());
+	        
 	        liveList.push(target);
+
+	        target[N].__liveParent = this._component;
+	        target[N].setMounted(parentIsMounted);
+
 	        ++tp;
+
 	    }
 	} else if (lp < liveList.length) {
+	    
 	    var spliceStart = lp;
 	    while (lp < liveList.length) {
 	        var victim = liveList[lp];
 	        // TODO: call willUnmount()
 	        // TODO: need to propagate these calls to live children
 	        this._el.removeChild(victim.getComponentRoot());
+	        
 	        victim[N].__liveParent = null;
-	        victim[N].__liveIsMounted = false;
+	        victim[N].setMounted(false);
+
 	        // TODO: call didUnmount()
 	        ++lp;
 	    }
 	    liveList.splice(spliceStart, liveList.length - spliceStart);
+
 	}
 
 	this._dirty = false;
 
+}
+
+Collection.prototype.willMount = function() {
+	this._callOnLiveChildren('willMount');
+}
+
+Collection.prototype.willUnmount = function() {
+	this._callOnLiveChildren('willUnmount');
+}
+
+Collection.prototype.setMounted = function(isMounted) {
+	this._callOnLiveChildren('setMounted', isMounted);
+}
+
+Collection.prototype.didMount = function() {
+	this._callOnLiveChildren('didMount');
+}
+
+Collection.prototype.didUnmount = function() {
+	this._callOnLiveChildren('didUnmount');
+}
+
+Collection.prototype._callOnLiveChildren = function(method, arg) {
+	this._liveChildren.forEach(function(c) { c[N][method](arg); });
 }
 },{"./instance":"/Users/jason/dev/projects/hiro/lib/instance.js","./node_key":"/Users/jason/dev/projects/hiro/lib/node_key.js"}],"/Users/jason/dev/projects/hiro/lib/Mountpoint.js":[function(require,module,exports){
 module.exports = Mountpoint;
@@ -516,7 +561,6 @@ function Mountpoint(component, el) {
 	this._component = component;
 	this._el = el;
 	this._parent = el.parentNode;
-	this._dirty = false;
 	this._logicalChild = null;
 	this._liveChild = null;
 
@@ -531,7 +575,6 @@ Mountpoint.prototype.removeComponent = function() {
 	}
 	this._logicalChild[N].__logicalParent = null;
 	this._logicalChild = null;
-	this._dirty = true;
 	Hiro.logChange(this);
 }
 
@@ -541,26 +584,67 @@ Mountpoint.prototype.setComponent = function(component) {
 	}
 	this._logicalChild = component;
 	component[N].__logicalParent = this._component;
-	this._dirty = true;
 	Hiro.logChange(this);
 }
 
 Mountpoint.prototype.syncImmediately = function() {
-	if (!this._dirty) {
-		return;
-	}
 	if (this._logicalChild !== this._liveChild) {
-		var elementToReplace = this._liveChild
-								? this._liveChild.getComponentRoot()
-								: this._el;
-		var elementToInsert = this._logicalChild
-								? this._logicalChild.getComponentRoot()
-								: this._el;
-		// TODO(jwf): lifecycle methods
-		this._parent.replaceChild(elementToInsert, elementToReplace);
-		this._liveChild = this._logicalChild;
+
+		var parentIsMounted = this._component[N].__liveIsMounted;
+		var incoming = this._logicalChild;
+		var outgoing = this._liveChild;
+
+		// if (parentIsMounted) {
+		// 	if (this._logicalChild && !this._logicalChild[N].__liveIsMounted) {
+		// 		// propagate willMount
+		// 	}
+		// 	if (this._liveChild) {
+		// 		// propagate willUnmount
+		// 	}
+		// }
+
+		this._parent.replaceChild(
+			incoming ? incoming.getComponentRoot() : this._el,
+			outgoing ? outgoing.getComponentRoot() : this._el
+		);
+
+		this._liveChild = incoming;
+		
+		if (incoming) {
+			incoming[N].__liveParent = this._component;
+			incoming[N].setMounted(parentIsMounted);
+		}
+		
+		if (outgoing) {
+			outgoing[N].__liveParent = null;
+			outgoing[N].setMounted(false);
+		}
+
+		// if (parentIsMounted) {
+		// 	if ()
+		// }
+
 	}
-	this._dirty = false;
+}
+
+Mountpoint.prototype.willMount = function() {
+	this._liveChild && this._liveChild[N].willMount();
+}
+
+Mountpoint.prototype.willUnmount = function() {
+	this._liveChild && this._liveChild[N].willUnmount();
+}
+
+Mountpoint.prototype.setMounted = function(isMounted) {
+	this._liveChild && this._liveChild[N].setMounted(isMounted);
+}
+
+Mountpoint.prototype.didMount = function() {
+	this._liveChild && this._liveChild[N].didMount();
+}
+
+Mountpoint.prototype.didUnmount = function() {
+	this._liveChild && this._liveChild[N].didUnmount();
 }
 
 },{"./instance":"/Users/jason/dev/projects/hiro/lib/instance.js","./node_key":"/Users/jason/dev/projects/hiro/lib/node_key.js"}],"/Users/jason/dev/projects/hiro/lib/SimpleComponent.js":[function(require,module,exports){
@@ -678,13 +762,23 @@ Hiro.logChange = function(thing) {
 }
 
 Hiro.addCollection = function(component, el) {
-	// TODO: stash this on component[N] somewhere?
-	return new Collection(component, el);
+	var n = component[N];
+	var c = new Collection(component, el);
+	if (!n.__containers) {
+		n.__containers = [];
+	}
+	n.__containers.push(c);
+	return c;
 }
 
 Hiro.addMountpoint = function(component, el) {
-	// TODO: stash this on component[N] somewhere?
-	return new Mountpoint(component, el);
+	var n = component[N];
+	var m = new Mountpoint(component, el);
+	if (!n.__containers) {
+		n.__containers = [];
+	}
+	n.__containers.push(m);
+	return m;
 }
 
 //
@@ -695,7 +789,44 @@ function Node(component) {
 	this.__logicalParent = null;
 	this.__liveParent = null;
 	this.__liveIsMounted = false;
+	this.__containers = null;
 }
+
+Node.prototype._callOnContainers = function(method, arg) {
+	if (this.__containers) {
+		for (var i = 0, len = this.__containers.length; i < len; ++i) {
+			this.__containers[i][method](arg);
+		}
+	}
+}
+
+Node.prototype.willMount = function() {
+	this.__component.componentWillMount();
+	this._callOnContainers('willMount');
+}
+
+Node.prototype.willUnmount = function() {
+	this.__component.componentWillUnmount();
+	this._callOnContainers('willUnmount');
+}
+
+Node.prototype.setMounted = function(isMounted) {
+	this.__liveIsMounted = isMounted;
+	this._callOnContainers('setMounted', isMounted);
+}
+
+Node.prototype.didMount = function() {
+	this.__component.componentWillMount();
+	this._callOnContainers('didMount');
+}
+
+Node.prototype.didUnmount = function() {
+	this.__component.componentWillUnmount();
+	this._callOnContainers('didUnmount');
+}
+
+//
+//
 
 function scheduleSync() {
 	if (!syncTimeout) {
@@ -720,18 +851,13 @@ function syncImmediately() {
 
 	if (renders.length) {
 		renders.forEach(function(component) {
-			
-			component.renderImmediately();	
-
-			// TODO: come back to this... the collections currently aren't
-			// propagating changes to the mount state...
-			// if (component[N].__liveIsMounted) {
-			// 	component.renderImmediately();	
-			// } else {
-			// 	// TODO: should we put this into some deferred list?
-			// 	// or mark the fact render is pending?
-			// }
-
+			if (component[N].__liveIsMounted) {
+				component.renderImmediately();	
+			} else {
+				// console.log("not mounted, skipping", component.getComponentId());
+				// TODO: should we put this into some deferred list?
+				// or mark the fact render is pending?
+			}
 		});
 		renders = [];
 	}
@@ -767,6 +893,11 @@ module.exports = {
 	getComponentRoot: function() {
 		throw new Error("you must override getComponentRoot()");
 	},
+
+	componentWillMount: function() {},
+	componentWillUnmount: function() {},
+	componentDidMount: function() {},
+	componentDidUnmount: function() {},
 
 	render: function(hint) {
 		if (hint) {
