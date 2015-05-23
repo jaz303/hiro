@@ -498,7 +498,7 @@ return [
         _callOnLiveChildren: function(method, arg) {
             this._liveChildren.forEach(function(c) { c[N][method](arg); });
         },
-        _syncChildren: function(targetList, garbage) {
+        _syncChildren: function(targetList, onVictim) {
             var childNodes = this.el.childNodes;
             var parentIsMounted = this.component[N].__liveIsMounted;
             var tp = 0, cp = 0;
@@ -531,9 +531,7 @@ return [
                     var victimComponent = victim.hiroComponent;
                     victimComponent[N].__liveParent = null;
                     victimComponent[N].setMounted(false);
-                    if (!victimComponent[N].__logicalParent) {
-                        garbage.push(victimComponent);
-                    }
+                    onVictim(victimComponent);
                     --p;
                 }
             }
@@ -595,7 +593,13 @@ return [
 			this.context.logChange(this);
 		},
 		syncImmediately: function(garbage) {
-			this._syncChildren(this._logicalChildren, garbage);
+			this._syncChildren(this._logicalChildren, function(component) {
+				// Collection will only GC components which haven't been
+				// attached elsewhere.
+				if (!component[N].__logicalParent) {
+				    garbage.push(component);
+				}
+			});
 		}
 	}
 ];
@@ -604,6 +608,7 @@ return [
 
 },{"./BaseCollection":"/Users/jason/dev/projects/hiro/lib/BaseCollection.js","./node_key":"/Users/jason/dev/projects/hiro/lib/node_key.js"}],"/Users/jason/dev/projects/hiro/lib/LazyCollection.js":[function(require,module,exports){
 var BaseCollection = require('./BaseCollection');
+var N = require('./node_key');
 
 var LazyCollection
 	= module.exports
@@ -623,14 +628,23 @@ return [
 			this.context.logChange(this);
 		},
 		syncImmediately: function(garbage) {
-			this._syncChildren(this._getChildren(), garbage);
+			var children = this._getChildren();
+			children.forEach(function(c) {
+				c[N].__logicalParent = this.component;
+			}, this);
+			this._syncChildren(children, function(component) {
+				// For now LazyCollection assumes that it "owns" any components
+				// so any culled component is eligible for garbage collection
+				component[N].__logicalParent = null;
+				garbage.push(component);
+			});
 		}
 	}
 ];
 
 });
 
-},{"./BaseCollection":"/Users/jason/dev/projects/hiro/lib/BaseCollection.js"}],"/Users/jason/dev/projects/hiro/lib/Mountpoint.js":[function(require,module,exports){
+},{"./BaseCollection":"/Users/jason/dev/projects/hiro/lib/BaseCollection.js","./node_key":"/Users/jason/dev/projects/hiro/lib/node_key.js"}],"/Users/jason/dev/projects/hiro/lib/Mountpoint.js":[function(require,module,exports){
 module.exports = Mountpoint;
 
 var N = require('./node_key');
